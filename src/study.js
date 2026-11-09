@@ -11,7 +11,10 @@ export const bank = new Map([...template.content.querySelectorAll("article")].ma
   }];
 }));
 export const bankIds = [...bank.keys()];
-export const examSize = 60;
+export const examSize = 63;
+export const scoreScale = 1000;
+export const passScore = 720;
+const previousExamSize = 60;
 export const storageKey = "ccarp-practice.v1";
 export const filters = { all: "Tất cả", wrong: "Câu sai", blank: "Chưa làm" };
 
@@ -46,11 +49,18 @@ export function readProgress(raw) {
     results: readSelections(practice.results),
     drafts: readSelections(practice.drafts, true),
   };
-  if (Array.isArray(exam?.ids) && exam.ids.length === examSize
-      && new Set(exam.ids).size === examSize && exam.ids.every((id) => bank.has(id))) {
+  if (Array.isArray(exam?.ids) && [previousExamSize, examSize].includes(exam.ids.length)
+      && new Set(exam.ids).size === exam.ids.length && exam.ids.every((id) => bank.has(id))) {
+    let ids = exam.ids;
+    if (ids.length === previousExamSize && exam.finished !== true) {
+      // Keep the saved order and append unused questions consistently across tabs.
+      const start = bankIds.indexOf(ids.at(-1)) + 1;
+      const remaining = [...bankIds.slice(start), ...bankIds.slice(0, start)].filter((id) => !ids.includes(id));
+      ids = [...ids, ...remaining.slice(0, examSize - ids.length)];
+    }
     result.exam = {
-      ids: exam.ids,
-      current: exam.ids.includes(exam.current) || exam.current === null ? exam.current : exam.ids[0],
+      ids,
+      current: ids.includes(exam.current) || exam.current === null ? exam.current : ids[0],
       filter: exam.finished === true && Object.hasOwn(filters, exam.filter) ? exam.filter : "all",
       finished: exam.finished === true,
       answers: readSelections(exam.answers),

@@ -194,6 +194,11 @@ legend { margin-bottom: .55rem; color: var(--muted); font-size: .87rem; font-wei
 .intro p { margin-top: .45rem; max-width: 42rem; color: var(--muted); }
 .intro .button { flex: none; }
 .results { margin-bottom: 1.25rem; }
+.results-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .6rem; }
+.results-heading .muted { margin-top: .35rem; }
+.result-status { padding: .3rem .65rem; border: 1px solid; border-radius: 8px; font-size: .87rem; }
+.result-status.good { background: var(--green-bg); border-color: var(--green-line); }
+.result-status.bad { background: var(--red-bg); border-color: var(--red-line); }
 .score-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; margin-top: .9rem; }
 .score-grid div { padding: .7rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--subtle); }
 .score-grid div:nth-child(1) { color: var(--accent-deep); background: var(--accent-soft); border-color: #ded3fa; }

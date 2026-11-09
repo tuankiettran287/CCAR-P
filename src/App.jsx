@@ -2,8 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createRoot } from "react-dom/client";
 import { HeroArt } from "./hero.jsx";
 import {
-  bank, examSize, filters, isCorrect, loadProgress, makeExam, readProgress,
-  saveProgress, sessionFor, storageKey, viewFor,
+  bank, examSize, filters, isCorrect, loadProgress, makeExam, passScore, readProgress,
+  saveProgress, scoreScale, sessionFor, storageKey, viewFor,
 } from "./study.js";
 import "./styles.css";
 
@@ -42,15 +42,16 @@ function Masthead({ examMode, canSave, switchMode }) {
   </header>;
 }
 
-function StudyHeading({ examMode, hasSession }) {
+function StudyHeading({ examMode, session }) {
+  const questionCount = session?.ids?.length ?? examSize;
   return <div className="page-heading">
     <HeroArt />
-    <p className="kicker" id="mode-label">{examMode ? "ĐỀ THI 60 CÂU" : "NGÂN HÀNG 160 CÂU"}</p>
+    <p className="kicker" id="mode-label">{examMode ? "ĐỀ THI " + questionCount + " CÂU" : "NGÂN HÀNG 160 CÂU"}</p>
     <h1 id="page-title">{examMode ? "Thi thử CCAR-P" : "Luyện từng câu"}</h1>
     <p id="page-description">{examMode
       ? "Đáp án và giải thích xuất hiện sau khi bạn nộp bài."
       : "Kiểm tra đáp án sau mỗi câu và xem lại những câu bạn làm sai."}</p>
-    {hasSession && <a id="mobile-map-link" className="mobile-map" href="#map-panel"><Icon name="grid" />Đến bản đồ câu hỏi</a>}
+    {session && <a id="mobile-map-link" className="mobile-map" href="#map-panel"><Icon name="grid" />Đến bản đồ câu hỏi</a>}
   </div>;
 }
 
@@ -58,17 +59,27 @@ function ExamIntro({ startExam }) {
   return <section id="exam-intro" className="intro panel">
     <div>
       <h2>Tạo đề thi thử</h2>
-      <p>Đề gồm 60 câu khác nhau được lấy ngẫu nhiên từ ngân hàng 160 câu. Bạn có thể đổi đáp án trước khi nộp bài.</p>
+      <p>Đề gồm {examSize} câu khác nhau lấy ngẫu nhiên từ ngân hàng 160 câu. Điểm đạt là {passScore}/{scoreScale}. Bạn có thể đổi đáp án trước khi nộp bài.</p>
     </div>
     <button id="exam-start" className="button primary" type="button" onClick={startExam}>Bắt đầu thi thử</button>
   </section>;
 }
 
-function ExamResults({ counts, startExam, review }) {
+function ExamResults({ counts, questionCount, startExam, review }) {
+  const score = Math.round(counts.correct * scoreScale / questionCount);
+  const passed = score >= passScore;
   return <section id="exam-results" className="results panel" aria-labelledby="results-title">
-    <h2 id="results-title" tabIndex={-1}>Kết quả thi thử</h2>
+    <div className="results-heading">
+      <div>
+        <h2 id="results-title" tabIndex={-1}>Kết quả thi thử</h2>
+        <p className="muted">Ngưỡng đạt {passScore}/{scoreScale}</p>
+      </div>
+      <strong id="result-status" className={passed ? "result-status good" : "result-status bad"}>
+        {passed ? "Đạt" : "Chưa đạt"}
+      </strong>
+    </div>
     <div className="score-grid">
-      <div><strong id="result-score">{counts.correct}/{examSize}</strong><span>Điểm theo số câu</span></div>
+      <div><strong id="result-score">{score}/{scoreScale}</strong><span>Điểm quy đổi</span></div>
       <div><strong id="result-correct">{counts.correct}</strong><span>Đúng</span></div>
       <div><strong id="result-wrong">{counts.wrong}</strong><span>Sai</span></div>
       <div><strong id="result-blank">{counts.blank}</strong><span>Bỏ trống</span></div>
@@ -317,9 +328,10 @@ function App() {
     <Masthead examMode={view.examMode} canSave={store.canSave}
       switchMode={(mode) => change((progress) => { progress.mode = mode; })} />
     <main className={view.current == null ? "shell" : "shell has-question"}>
-      <StudyHeading examMode={view.examMode} hasSession={!!view.session} />
+      <StudyHeading examMode={view.examMode} session={view.session} />
       {!view.session && <ExamIntro startExam={startExam} />}
-      {view.examMode && view.session?.finished && <ExamResults counts={view.counts} startExam={startExam} review={() => setFilter("wrong")} />}
+      {view.examMode && view.session?.finished && <ExamResults counts={view.counts} questionCount={view.ids.length}
+        startExam={startExam} review={() => setFilter("wrong")} />}
       {view.session && <div id="question-board" className="layout">
         <QuestionPanel view={view} goTo={goTo} choose={choose} check={check} retry={retry} />
         <QuestionMap view={view} goTo={goTo} setFilter={setFilter} openSubmit={() => dialog.current.showModal()} />
@@ -328,7 +340,7 @@ function App() {
     </main>
     <dialog id="submit-dialog" ref={dialog} aria-labelledby="submit-title">
       <h2 id="submit-title">Nộp bài thi thử?</h2>
-      <p id="submit-summary">Đã chọn đáp án cho {view.counts.answered}/{examSize} câu. Còn {view.counts.blank} câu bỏ trống. Bạn có thể xem lại đáp án sau khi nộp.</p>
+      <p id="submit-summary">Đã chọn đáp án cho {view.counts.answered}/{view.ids.length} câu. Còn {view.counts.blank} câu bỏ trống. Bạn có thể xem lại đáp án sau khi nộp.</p>
       <form method="dialog" className="actions">
         <button className="button" autoFocus>Tiếp tục làm</button>
         <button id="confirm-submit" className="button primary" type="button" onClick={submitExam}>Nộp và xem kết quả</button>
