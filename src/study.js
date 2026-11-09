@@ -16,7 +16,7 @@ export const scoreScale = 1000;
 export const passScore = 720;
 const previousExamSize = 60;
 export const storageKey = "ccarp-practice.v1";
-export const filters = { all: "Tất cả", wrong: "Câu sai", blank: "Chưa làm" };
+export const filters = { all: "Tất cả", partial: "Một phần", wrong: "Câu sai", blank: "Chưa làm" };
 
 const fresh = () => ({
   mode: "practice",
@@ -88,9 +88,12 @@ export function saveProgress(progress) {
 
 export const sessionFor = (progress) => progress[progress.mode];
 
-export function isCorrect(id, choices) {
+export function gradeQuestion(id, choices) {
+  if (!choices?.length) return { status: "blank", credit: 0 };
   const key = bank.get(id).correct;
-  return choices.length === key.length && key.every((i) => choices.includes(i));
+  const credit = key.filter((option) => choices.includes(option)).length / key.length;
+  const status = credit === 1 ? "correct" : credit > 0 ? "partial" : "wrong";
+  return { status, credit };
 }
 
 export function viewFor(progress) {
@@ -99,14 +102,15 @@ export function viewFor(progress) {
   const ids = examMode ? (session?.ids ?? []) : bankIds;
   const answers = examMode ? session?.answers : session.results;
   const ongoingExam = examMode && !!session && !session.finished;
-  const counts = { correct: 0, wrong: 0, blank: 0, answered: 0 };
+  const counts = { correct: 0, partial: 0, wrong: 0, blank: 0, answered: 0 };
+  let earnedCredit = 0;
   const entries = ids.map((id, index) => {
     const selected = answers[id];
-    let status = "blank";
-    if (selected?.length) {
-      status = ongoingExam ? "answered" : isCorrect(id, selected) ? "correct" : "wrong";
-    }
+    const { status, credit } = ongoingExam && selected?.length
+      ? { status: "answered", credit: 0 }
+      : gradeQuestion(id, selected);
     counts[status]++;
+    earnedCredit += credit;
     return { id, number: index + 1, status };
   });
   const visible = entries.filter(({ status }) => session.filter === "all" || status === session.filter);
@@ -118,7 +122,7 @@ export function viewFor(progress) {
     : (session.drafts[current] ?? answers[current] ?? []);
   const revealed = examMode ? !!session?.finished
     : Object.hasOwn(answers, current) && !Object.hasOwn(session.drafts, current);
-  return { examMode, ongoingExam, session, ids, visible, counts, current, index, previous, next, selected, revealed };
+  return { examMode, ongoingExam, session, ids, visible, counts, earnedCredit, current, index, previous, next, selected, revealed };
 }
 
 export function makeExam() {

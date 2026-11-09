@@ -1,6 +1,6 @@
 # CCAR-P Luyện thi
 
-App React luyện tập 160 câu và thi thử với đề ngẫu nhiên 63 câu. Điểm được quy đổi theo tỷ lệ câu đúng trên thang 1000, với ngưỡng đạt 720 điểm. Dùng phím ← hoặc → để chuyển câu trên máy tính. Trên điện thoại, các nút chuyển câu nằm ở đáy màn hình. Tiến độ được lưu trong trình duyệt.
+App React luyện tập 160 câu và thi thử với đề ngẫu nhiên 63 câu. Mỗi câu nhiều đáp án được tính điểm theo tỷ lệ đáp án đúng đã chọn. Tổng điểm được quy đổi sang thang 1000, với ngưỡng đạt 720 điểm. Dùng phím ← hoặc → để chuyển câu trên máy tính. Trên điện thoại, các nút chuyển câu nằm ở đáy màn hình. Tiến độ được lưu trong trình duyệt.
 
 ## Chạy trên máy
 

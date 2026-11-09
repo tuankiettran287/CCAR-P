@@ -152,6 +152,9 @@ legend { margin-bottom: .55rem; color: var(--muted); font-size: .87rem; font-wei
 .feedback ul { margin: .35rem 0; padding-left: 1.3rem; }
 .feedback li + li { margin-top: .3rem; }
 .status-line { font-weight: 760; }
+.status-line[data-status="correct"] { color: var(--green); }
+.status-line[data-status="partial"] { color: #805207; }
+.status-line[data-status="wrong"], .status-line[data-status="blank"] { color: var(--red); }
 .map { grid-area: map; position: sticky; top: 1rem; padding: 1.1rem; }
 .map-head { display: flex; align-items: center; gap: .55rem; }
 .map h2 { flex: 1; font-size: 1.02rem; }
@@ -182,6 +185,7 @@ legend { margin-bottom: .55rem; color: var(--muted); font-size: .87rem; font-wei
 }
 #question-map button:hover { border-color: #a99ad1; }
 #question-map button[data-state="correct"] { color: var(--green); background: var(--green-bg); border-color: var(--green-line); }
+#question-map button[data-state="partial"], .score-grid .score-partial { color: #805207; background: #fff5de; border-color: #e5c487; }
 #question-map button[data-state="wrong"] { color: var(--red); background: var(--red-bg); border-color: var(--red-line); }
 #question-map button[data-state="answered"] { color: var(--blue); background: var(--blue-bg); border-color: #abc0e4; }
 #question-map button[aria-current="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
@@ -199,11 +203,11 @@ legend { margin-bottom: .55rem; color: var(--muted); font-size: .87rem; font-wei
 .result-status { padding: .3rem .65rem; border: 1px solid; border-radius: 8px; font-size: .87rem; }
 .result-status.good { background: var(--green-bg); border-color: var(--green-line); }
 .result-status.bad { background: var(--red-bg); border-color: var(--red-line); }
-.score-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; margin-top: .9rem; }
+.score-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .65rem; margin-top: .9rem; }
 .score-grid div { padding: .7rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--subtle); }
-.score-grid div:nth-child(1) { color: var(--accent-deep); background: var(--accent-soft); border-color: #ded3fa; }
-.score-grid div:nth-child(2) { color: var(--green); background: var(--green-bg); border-color: var(--green-line); }
-.score-grid div:nth-child(3) { color: var(--red); background: var(--red-bg); border-color: var(--red-line); }
+.score-grid .score-total { color: var(--accent-deep); background: var(--accent-soft); border-color: #ded3fa; }
+.score-grid .score-correct { color: var(--green); background: var(--green-bg); border-color: var(--green-line); }
+.score-grid .score-wrong { color: var(--red); background: var(--red-bg); border-color: var(--red-line); }
 .score-grid strong { display: block; font-size: clamp(1.25rem, 3vw, 1.8rem); font-variant-numeric: tabular-nums; }
 .score-grid span { font-size: .83rem; font-weight: 650; }
 footer { margin-top: 1.35rem; padding-top: .85rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .83rem; }
@@ -263,5 +267,6 @@ dialog .actions { justify-content: flex-end; }
   #practice-actions .button { width: 100%; }
   .intro { flex-direction: column; align-items: stretch; }
   .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .score-grid .score-total { grid-column: 1 / -1; }
   .filters button, #question-map button { min-height: 44px; }
 }

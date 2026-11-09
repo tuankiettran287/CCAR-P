@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createRoot } from "react-dom/client";
 import { HeroArt } from "./hero.jsx";
 import {
-  bank, examSize, filters, isCorrect, loadProgress, makeExam, passScore, readProgress,
+  bank, examSize, filters, gradeQuestion, loadProgress, makeExam, passScore, readProgress,
   saveProgress, scoreScale, sessionFor, storageKey, viewFor,
 } from "./study.js";
 import "./styles.css";
@@ -65,8 +65,8 @@ function ExamIntro({ startExam }) {
   </section>;
 }
 
-function ExamResults({ counts, questionCount, startExam, review }) {
-  const score = Math.round(counts.correct * scoreScale / questionCount);
+function ExamResults({ counts, earnedCredit, questionCount, startExam, review }) {
+  const score = Math.round(earnedCredit * scoreScale / questionCount);
   const passed = score >= passScore;
   return <section id="exam-results" className="results panel" aria-labelledby="results-title">
     <div className="results-heading">
@@ -79,9 +79,10 @@ function ExamResults({ counts, questionCount, startExam, review }) {
       </strong>
     </div>
     <div className="score-grid">
-      <div><strong id="result-score">{score}/{scoreScale}</strong><span>Điểm quy đổi</span></div>
-      <div><strong id="result-correct">{counts.correct}</strong><span>Đúng</span></div>
-      <div><strong id="result-wrong">{counts.wrong}</strong><span>Sai</span></div>
+      <div className="score-total"><strong id="result-score">{score}/{scoreScale}</strong><span>Điểm quy đổi</span></div>
+      <div className="score-correct"><strong id="result-correct">{counts.correct}</strong><span>Đúng</span></div>
+      <div className="score-partial"><strong id="result-partial">{counts.partial}</strong><span>Đúng một phần</span></div>
+      <div className="score-wrong"><strong id="result-wrong">{counts.wrong}</strong><span>Sai</span></div>
       <div><strong id="result-blank">{counts.blank}</strong><span>Bỏ trống</span></div>
     </div>
     <div className="actions">
@@ -112,6 +113,13 @@ function AnswerOption({ paragraphs, index, selected, question, locked, choose })
   </label>;
 }
 
+const gradingMessages = {
+  correct: "Bạn trả lời đúng",
+  partial: "Đúng một phần",
+  wrong: "Bạn trả lời sai",
+  blank: "Bạn đã bỏ trống câu này",
+};
+
 function QuestionPanel({ view, goTo, choose, check, retry }) {
   const { examMode, current, index, ids, selected, revealed, previous, next } = view;
   if (current == null) {
@@ -121,7 +129,7 @@ function QuestionPanel({ view, goTo, choose, check, retry }) {
     </section>;
   }
   const question = bank.get(current);
-  const correct = revealed && isCorrect(current, selected);
+  const grade = revealed ? gradeQuestion(current, selected) : null;
   const position = (index + 1) + "/" + ids.length;
   return <section id="question-panel" className="question panel" aria-labelledby="question-title">
     <div className="question-header">
@@ -149,9 +157,10 @@ function QuestionPanel({ view, goTo, choose, check, retry }) {
     </fieldset>
     <section id="feedback" className="feedback" aria-labelledby="feedback-title" hidden={!revealed}>
       <h3 id="feedback-title" tabIndex={-1}>Giải thích</h3>
-      {revealed && <>
-        <p id="grading-status" className={correct ? "status-line good" : "status-line bad"}>
-          {!selected.length ? "Bạn đã bỏ trống câu này" : correct ? "Bạn trả lời đúng" : "Bạn trả lời sai"}
+      {grade && <>
+        <p id="grading-status" className="status-line" data-status={grade.status}>
+          {gradingMessages[grade.status]}
+          {grade.status === "partial" && " · " + Math.round(grade.credit * 100) + "% điểm câu này"}
         </p>
         <div id="explanation" dangerouslySetInnerHTML={{ __html: question.explanation }} />
       </>}
@@ -179,7 +188,7 @@ function QuestionPanel({ view, goTo, choose, check, retry }) {
   </section>;
 }
 
-const statusLabels = { correct: "Đúng", wrong: "Sai", answered: "Đã chọn", blank: "Chưa làm" };
+const statusLabels = { correct: "Đúng", partial: "Đúng một phần", wrong: "Sai", answered: "Đã chọn", blank: "Chưa làm" };
 
 function QuestionMap({ view, goTo, setFilter, openSubmit }) {
   const { ids, counts, visible, session, current, ongoingExam } = view;
@@ -193,7 +202,7 @@ function QuestionMap({ view, goTo, setFilter, openSubmit }) {
     <progress id="progress" max={ids.length} value={done} aria-label="Tiến độ làm bài" />
     <p id="counts">{ongoingExam
       ? done + " đã chọn · " + counts.blank + " chưa làm"
-      : counts.correct + " đúng · " + counts.wrong + " sai · " + counts.blank + " chưa làm"}</p>
+      : counts.correct + " đúng · " + counts.partial + " một phần · " + counts.wrong + " sai · " + counts.blank + " chưa làm"}</p>
     {!ongoingExam && <div className="filters" id="filters" role="group" aria-label="Lọc câu hỏi">
       {Object.entries(filters).map(([filter, label]) => <button key={filter} type="button" data-filter={filter}
         aria-pressed={session.filter === filter} onClick={() => setFilter(filter)}>{label}</button>)}
@@ -330,7 +339,8 @@ function App() {
     <main className={view.current == null ? "shell" : "shell has-question"}>
       <StudyHeading examMode={view.examMode} session={view.session} />
       {!view.session && <ExamIntro startExam={startExam} />}
-      {view.examMode && view.session?.finished && <ExamResults counts={view.counts} questionCount={view.ids.length}
+      {view.examMode && view.session?.finished && <ExamResults counts={view.counts}
+        earnedCredit={view.earnedCredit} questionCount={view.ids.length}
         startExam={startExam} review={() => setFilter("wrong")} />}
       {view.session && <div id="question-board" className="layout">
         <QuestionPanel view={view} goTo={goTo} choose={choose} check={check} retry={retry} />
